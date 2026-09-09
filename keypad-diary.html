@@ -1,0 +1,1197 @@
+<title>Keypad Diary</title>
+<meta name="description" content="A one-week diary probe that imitates a feature-phone keypad and records how someone types.">
+<style>
+  /* ============================================================
+     PALETTE  — cool neutral wrapper + a single amber accent.
+     The phone is a deliberately dark object in every theme.
+     ============================================================ */
+  :root{
+    --bg:#e7e9ec;
+    --surface:#ffffff;
+    --surface-2:#f1f2f5;
+    --text:#1b1e23;
+    --muted:#6b7280;
+    --line:#d7dae0;
+    --accent:#bd6f1c;
+    --accent-weak:#f2e3ce;
+    --good:#2f7d5d;
+    --good-weak:#dcefe5;
+    --danger:#a5402f;
+    --focus:#2b6cb0;
+
+    --shell:#232427;
+    --shell-2:#141416;
+    --shell-edge:#3c3e42;
+    --key:#e4e5e2;
+    --key-2:#c6c8c3;
+    --key-edge:#a6a9a3;
+    --key-ink:#2b2c2e;
+    --key-sub:#6b6d6a;
+    --lcd:#b8c6a3;
+    --lcd-ink:#1f2a17;
+    --lcd-dim:#586b45;
+
+    --r:14px;
+    --font:"DM Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --pixel:"Silkscreen","DM Mono",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#131417;
+      --surface:#1c1e22;
+      --surface-2:#23262b;
+      --text:#e7e8ea;
+      --muted:#9aa0a8;
+      --line:#2c2f35;
+      --accent:#e0912f;
+      --accent-weak:#3a2c17;
+      --good:#4bbf8a;
+      --good-weak:#1c2f27;
+      --danger:#df7a67;
+      --focus:#7cb3e8;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131417;
+    --surface:#1c1e22;
+    --surface-2:#23262b;
+    --text:#e7e8ea;
+    --muted:#9aa0a8;
+    --line:#2c2f35;
+    --accent:#e0912f;
+    --accent-weak:#3a2c17;
+    --good:#4bbf8a;
+    --good-weak:#1c2f27;
+    --danger:#df7a67;
+    --focus:#7cb3e8;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:22px 16px 40px;
+  }
+  .wrap{width:100%;max-width:432px}
+
+  h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-0.01em}
+  h1{font-size:1.5rem;font-weight:700}
+  h2{font-size:1.15rem;font-weight:600}
+  p{margin:.6em 0}
+  a{color:var(--accent)}
+  .eyebrow{
+    font-size:.7rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:.5rem;
+  }
+  .muted{color:var(--muted)}
+  .small{font-size:.82rem}
+
+  .screen[hidden]{display:none!important}
+  .screen{animation:fade .18s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    padding:20px;
+  }
+  .card + .card{margin-top:14px}
+
+  /* ---------- buttons ---------- */
+  button{font-family:inherit}
+  .btn{
+    appearance:none;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-size:.95rem;font-weight:600;
+    padding:12px 18px;border-radius:10px;cursor:pointer;width:100%;
+    transition:transform .04s ease, background .15s ease;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  :root[data-theme="dark"] .btn-primary,
+  :root:not([data-theme="light"]) .btn-primary{color:#1b1206}
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .btn-primary{color:#fff}}
+  .btn-ghost{background:transparent}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .btn-row{display:flex;gap:10px}
+  .btn-row .btn{width:auto;flex:1}
+  .linkbtn{
+    background:none;border:0;color:var(--accent);cursor:pointer;
+    font-size:.85rem;font-weight:600;padding:6px 0;text-decoration:underline;
+  }
+
+  :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+
+  ul.tight{margin:.4em 0;padding-left:1.1em}
+  ul.tight li{margin:.25em 0}
+
+  .consent-check{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:12px;margin:14px 0;cursor:pointer;
+  }
+  .consent-check input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent)}
+
+  .ph{color:var(--accent);font-weight:600}
+
+  /* ---------- home ---------- */
+  .topline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+  .chip{
+    font-family:var(--mono);font-size:.72rem;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap;
+  }
+  .dots{display:flex;gap:6px;margin:14px 0 4px}
+  .dots i{width:100%;height:6px;border-radius:3px;background:var(--line)}
+  .dots i.done{background:var(--good)}
+  .dots i.today{background:var(--accent)}
+
+  .prompt-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .prow{
+    display:flex;gap:12px;align-items:center;text-align:left;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;cursor:pointer;color:var(--text);width:100%;
+    transition:border-color .15s ease;
+  }
+  .prow:hover:not([disabled]){border-color:var(--accent)}
+  .prow[disabled]{cursor:not-allowed;opacity:.55}
+  .prow .day{
+    font-family:var(--pixel);font-size:.62rem;line-height:1.1;color:var(--muted);
+    width:34px;flex:none;text-transform:uppercase;
+  }
+  .prow .txt{flex:1;font-size:.9rem;line-height:1.4}
+  .prow .state{font-size:.72rem;font-weight:600;white-space:nowrap;flex:none}
+  .prow .state.do{color:var(--accent)}
+  .prow .state.done{color:var(--good)}
+  .prow .state.locked{color:var(--muted);font-weight:500}
+
+  .banner{
+    background:var(--accent-weak);border:1px solid var(--accent);
+    border-radius:12px;padding:14px;margin-top:14px;font-size:.9rem;
+  }
+
+  /* ---------- compose ---------- */
+  .backlink{
+    background:none;border:0;color:var(--muted);cursor:pointer;
+    font-size:.85rem;font-weight:600;padding:4px 0;margin-bottom:10px;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .promptcard{
+    background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:10px;padding:12px 14px;margin-bottom:16px;
+  }
+  .promptcard .day{font-family:var(--pixel);font-size:.6rem;color:var(--muted);text-transform:uppercase}
+  .promptcard .txt{font-size:.95rem;margin-top:4px}
+
+  /* ---------- the phone ---------- */
+  .phone{
+    background:linear-gradient(180deg,var(--shell-edge),var(--shell) 12%,var(--shell) 88%,var(--shell-2));
+    border-radius:30px;padding:16px 16px 20px;
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 18px 40px -18px rgba(0,0,0,.55);
+    border:1px solid #0c0d10;
+    max-width:340px;margin:0 auto;
+    user-select:none;
+  }
+  .brand{
+    text-align:center;color:#8a8d90;font-family:var(--pixel);
+    font-size:.55rem;letter-spacing:.1em;padding:2px 0 10px;
+  }
+  .lcd{
+    background:var(--lcd);
+    border-radius:8px;
+    padding:8px 10px 10px;
+    box-shadow:0 0 0 2px #0c0d10, 0 2px 6px rgba(0,0,0,.4) inset;
+    color:var(--lcd-ink);
+  }
+  .lcd-status{
+    display:flex;align-items:center;gap:8px;
+    font-family:var(--pixel);font-size:.55rem;color:var(--lcd-dim);
+    border-bottom:1px dashed rgba(31,42,23,.35);
+    padding-bottom:5px;margin-bottom:6px;
+  }
+  .lcd-status .mode{margin-left:auto;letter-spacing:.05em}
+  .sig{display:flex;gap:1px;align-items:flex-end;height:9px}
+  .sig i{width:2px;background:var(--lcd-ink)}
+  .sig i:nth-child(1){height:3px}
+  .sig i:nth-child(2){height:5px}
+  .sig i:nth-child(3){height:7px}
+  .sig i:nth-child(4){height:9px}
+  .bat{width:15px;height:8px;border:1px solid var(--lcd-ink);position:relative;padding:1px}
+  .bat::after{content:"";position:absolute;right:-3px;top:2px;width:2px;height:2px;background:var(--lcd-ink)}
+  .bat i{display:block;height:100%;width:72%;background:var(--lcd-ink)}
+  .lcd-view{
+    font-family:var(--mono);font-size:.9rem;line-height:1.5;
+    height:132px;overflow-y:auto;overflow-wrap:break-word;white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .lcd-view .prov{background:var(--lcd-ink);color:var(--lcd);border-radius:2px}
+  .lcd-view .caret{
+    display:inline-block;width:.5ch;height:1.05em;background:var(--lcd-ink);
+    transform:translateY(.18em);animation:blink 1.05s steps(1,end) infinite;
+  }
+  .lcd-view .placeholder{color:var(--lcd-dim)}
+  @keyframes blink{50%{opacity:0}}
+  .lcd-hint{
+    font-family:var(--mono);font-size:.62rem;color:var(--lcd-dim);
+    border-top:1px dashed rgba(31,42,23,.35);padding-top:5px;margin-top:6px;min-height:1.4em;
+  }
+
+  .softrow{display:flex;gap:6px;margin:12px 0 7px;align-items:stretch}
+  .soft{
+    flex:1;background:linear-gradient(180deg,var(--key),var(--key-2));
+    border:1px solid var(--key-edge);
+    color:var(--key-ink);font-size:.66rem;font-weight:700;letter-spacing:.03em;
+    padding:9px 4px;border-radius:14px;cursor:pointer;
+    box-shadow:0 1px 0 rgba(255,255,255,.55) inset,0 2px 3px rgba(0,0,0,.32);
+  }
+  .soft .mode{color:var(--accent)}
+  .soft:active{transform:translateY(1px);filter:brightness(.92)}
+
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .key{
+    background:linear-gradient(180deg,var(--key),var(--key-2) 60%,#bcbeb9);
+    border:1px solid var(--key-edge);
+    border-radius:16px;
+    padding:9px 13px;
+    cursor:pointer;
+    display:flex;flex-direction:row;align-items:baseline;justify-content:space-between;gap:6px;
+    color:var(--key-ink);
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 3px rgba(0,0,0,.35);
+    transition:transform .04s ease, filter .12s ease, box-shadow .12s ease;
+  }
+  .pad .key:nth-child(3n){flex-direction:row-reverse}
+  .key:active,.key.lit{
+    transform:translateY(1px);
+    filter:brightness(.9);
+    box-shadow:0 0 0 2px var(--accent),0 1px 2px rgba(0,0,0,.4) inset;
+  }
+  .key .kd{font-size:1.35rem;font-weight:700;line-height:1;font-family:var(--font)}
+  .key .kl{font-size:.62rem;font-weight:600;letter-spacing:.03em;color:var(--key-sub);text-transform:lowercase;min-height:.8em}
+
+  .callrow{display:flex;gap:6px;margin-top:9px}
+  .callrow button{
+    flex:1;border:1px solid var(--key-edge);border-radius:16px;
+    padding:11px 4px;font-size:.78rem;font-weight:700;cursor:pointer;
+    background:linear-gradient(180deg,var(--key),var(--key-2) 60%,#bcbeb9);
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 3px rgba(0,0,0,.35);
+  }
+  .k-send{color:#1c6b3f}
+  .k-discard{color:#a5402f}
+  .callrow button:active{transform:translateY(1px);filter:brightness(.9)}
+
+  /* ---------- reflect ---------- */
+  .effort{display:flex;gap:8px;margin:10px 0}
+  .effort button{
+    flex:1;aspect-ratio:1;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-weight:700;font-size:1rem;cursor:pointer;
+  }
+  .effort button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+  :root[data-theme="dark"] .effort button[aria-pressed="true"],
+  :root:not([data-theme="light"]) .effort button[aria-pressed="true"]{color:#1b1206}
+  .effort-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+  textarea{
+    width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);
+    color:var(--text);font-family:inherit;font-size:.9rem;padding:10px;resize:vertical;min-height:76px;
+  }
+  .msg-preview{
+    font-family:var(--mono);font-size:.85rem;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre-wrap;
+    overflow-wrap:break-word;word-break:break-word;
+  }
+
+  /* ---------- done ---------- */
+  .stat-row{display:flex;gap:8px;margin:14px 0}
+  .stat{
+    flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px;text-align:center;
+  }
+  .stat b{display:block;font-size:1.15rem;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+  .stat span{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .sync{font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:6px;margin-top:4px}
+  .sync .ok{color:var(--good)}
+  .sync .pend{color:var(--accent)}
+
+  /* ---------- backup ---------- */
+  .backup-area{width:100%;min-height:150px;font-family:var(--mono);font-size:.72rem}
+
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+    background:var(--text);color:var(--bg);font-size:.82rem;font-weight:600;
+    padding:10px 16px;border-radius:999px;z-index:50;opacity:0;transition:opacity .2s ease;
+    pointer-events:none;max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1}
+
+  footer.appfoot{margin-top:18px;text-align:center}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+    .lcd-view .caret{animation:none}
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- ===================== CONSENT ===================== -->
+  <section class="screen" data-screen="consent">
+    <div class="card">
+      <div class="eyebrow">UTS · Human-Centred Design Research Methods</div>
+      <h1>Keypad Diary</h1>
+      <p class="muted small">A two-week diary study about how people adapt to old mobile-phone keypads &mdash; the kind where you press <b>7</b> four times to get an &ldquo;s&rdquo;.</p>
+      <p>Each day you&rsquo;ll get a short prompt and write a message through the on-screen keypad. Write the way that feels natural to you &mdash; there are no wrong answers, and shortcuts are welcome.</p>
+
+      <p class="small" style="margin-bottom:2px"><b>While you use it, the app records:</b></p>
+      <ul class="tight small">
+        <li>the messages you type here</li>
+        <li>which keys you press and when, how long each entry takes, and edits you make</li>
+        <li>a 1&ndash;5 effort rating and any notes you add afterwards</li>
+        <li>your browser type and screen size</li>
+      </ul>
+      <p class="small" style="margin-bottom:2px"><b>It never sees:</b></p>
+      <ul class="tight small">
+        <li>anything from your real phone &mdash; no contacts, messages, apps or files</li>
+        <li>your location</li>
+        <li>your name or contact details, unless you type them into a message yourself</li>
+      </ul>
+
+      <p class="small muted">Your entries are sent to a private <span class="ph">&#10216;Google Sheet / form&#10217;</span> that only the researcher can access. Taking part is voluntary &mdash; skip any prompt, and stop whenever you like. To ask questions or withdraw your data, contact <span class="ph">&#10216;Annie Lacoba&#10217;</span>, <span class="ph">&#10216;annie.lacoba@student.uts.edu.au&#10217;</span>.</p>
+
+      <label class="consent-check">
+        <input type="checkbox" id="consentBox">
+        <span class="small">I&rsquo;ve read this and I agree to take part.</span>
+      </label>
+      <button class="btn btn-primary" id="startBtn" disabled>Start</button>
+    </div>
+  </section>
+
+  <!-- ===================== HOME ===================== -->
+  <section class="screen" data-screen="home" hidden>
+    <div class="card">
+      <div class="topline">
+        <h2>Your prompts</h2>
+        <span class="chip" id="idChip">ID &mdash;</span>
+      </div>
+      <div class="small muted" id="dayLine">Day 1</div>
+      <div class="dots" id="dayDots"></div>
+      <p class="small muted">Try to do one a day, but do them whenever suits. You can skip any prompt.</p>
+      <div class="prompt-list" id="promptList"></div>
+      <div class="banner" id="wrapBanner" hidden></div>
+    </div>
+    <footer class="appfoot">
+      <button class="linkbtn" id="toBackup">Back up / send my entries</button>
+    </footer>
+  </section>
+
+  <!-- ===================== COMPOSE ===================== -->
+  <section class="screen" data-screen="compose" hidden>
+    <button class="backlink" id="composeBack">&larr; Prompts</button>
+    <div class="promptcard">
+      <div class="day" id="composeDay">Day 1</div>
+      <div class="txt" id="composePrompt"></div>
+    </div>
+
+    <div class="phone">
+      <div class="brand">&#10216;probe&#10217;</div>
+      <div class="lcd">
+        <div class="lcd-status">
+          <span class="sig"><i></i><i></i><i></i><i></i></span>
+          <span id="lcdCount">0</span>
+          <span class="bat"><i></i></span>
+          <span class="mode" id="lcdMode">Abc</span>
+        </div>
+        <div class="lcd-view" id="lcdView"></div>
+        <div class="lcd-hint" id="lcdHint">Tap a key again for the next letter.</div>
+      </div>
+
+      <div class="softrow">
+        <button class="soft" id="modeSoft">CASE&nbsp;<span class="mode" id="modeSoftLabel">Abc</span></button>
+        <button class="soft" id="clearSoft">CLEAR&nbsp;&#9003;</button>
+      </div>
+
+      <div class="pad" id="pad">
+        <button class="key" data-k="1"><span class="kd">1</span><span class="kl">.,?!</span></button>
+        <button class="key" data-k="2"><span class="kd">2</span><span class="kl">abc</span></button>
+        <button class="key" data-k="3"><span class="kd">3</span><span class="kl">def</span></button>
+        <button class="key" data-k="4"><span class="kd">4</span><span class="kl">ghi</span></button>
+        <button class="key" data-k="5"><span class="kd">5</span><span class="kl">jkl</span></button>
+        <button class="key" data-k="6"><span class="kd">6</span><span class="kl">mno</span></button>
+        <button class="key" data-k="7"><span class="kd">7</span><span class="kl">pqrs</span></button>
+        <button class="key" data-k="8"><span class="kd">8</span><span class="kl">tuv</span></button>
+        <button class="key" data-k="9"><span class="kd">9</span><span class="kl">wxyz</span></button>
+        <button class="key" data-k="star"><span class="kd">&lowast;</span><span class="kl">+=&lt;&gt;</span></button>
+        <button class="key" data-k="0"><span class="kd">0</span><span class="kl">&#9251;</span></button>
+        <button class="key" data-k="hash"><span class="kd">#</span><span class="kl">&#8679;</span></button>
+      </div>
+
+      <div class="callrow">
+        <button class="k-send" id="sendBtn">SEND &#9654;</button>
+        <button class="k-discard" id="discardBtn">&#9664; DISCARD</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== REFLECT ===================== -->
+  <section class="screen" data-screen="reflect" hidden>
+    <div class="card">
+      <h2>Sent &#128077;</h2>
+      <p class="small muted">Here&rsquo;s what you wrote:</p>
+      <div class="msg-preview" id="reflectMsg"></div>
+
+      <p class="small" style="margin-top:16px;margin-bottom:2px"><b>How much effort did that take?</b></p>
+      <div class="effort" id="effortRow">
+        <button data-v="1" aria-pressed="false">1</button>
+        <button data-v="2" aria-pressed="false">2</button>
+        <button data-v="3" aria-pressed="false">3</button>
+        <button data-v="4" aria-pressed="false">4</button>
+        <button data-v="5" aria-pressed="false">5</button>
+      </div>
+      <div class="effort-labels"><span>Hardly any</span><span>A lot</span></div>
+
+      <p class="small" style="margin-top:16px;margin-bottom:6px"><b>Anything to add? (optional)</b><br>
+        <span class="muted">Did you shorten or drop any words, spell something differently, or use symbols? What, and why?</span></p>
+      <textarea id="reflectNotes" placeholder="Type here with your normal keyboard&hellip;"></textarea>
+
+      <button class="btn btn-primary" id="saveEntryBtn" style="margin-top:14px">Save entry</button>
+    </div>
+  </section>
+
+  <!-- ===================== DONE ===================== -->
+  <section class="screen" data-screen="done" hidden>
+    <div class="card">
+      <h2>Saved</h2>
+      <div class="stat-row">
+        <div class="stat"><b id="dTime">0:00</b><span>time</span></div>
+        <div class="stat"><b id="dPress">0</b><span>key presses</span></div>
+        <div class="stat"><b id="dChars">0</b><span>characters</span></div>
+      </div>
+      <div class="sync" id="doneSync"></div>
+      <button class="btn btn-primary" id="doneHome" style="margin-top:16px">Back to prompts</button>
+      <button class="btn btn-ghost" id="doneAgain" style="margin-top:8px">Do this prompt again</button>
+    </div>
+  </section>
+
+  <!-- ===================== BACKUP ===================== -->
+  <section class="screen" data-screen="backup" hidden>
+    <button class="backlink" id="backupBack">&larr; Prompts</button>
+    <div class="card">
+      <h2>Back up &amp; send</h2>
+      <p class="small muted">Your entries live on this phone as you go, and the app tries to send each one automatically. If you&rsquo;re asked to, or near the end of the two weeks, copy everything here and send it to the researcher.</p>
+      <div class="sync" id="backupSync"></div>
+      <div class="btn-row" style="margin:12px 0">
+        <button class="btn" id="retryBtn">Retry sending</button>
+        <button class="btn btn-primary" id="copyBtn">Copy all</button>
+      </div>
+      <button class="linkbtn" id="testBtn">Run a connection test</button>
+      <div class="small" id="diagLine" style="margin:6px 0 10px;font-family:var(--mono);white-space:pre-wrap;word-break:break-word"></div>
+      <textarea class="backup-area" id="backupArea" readonly></textarea>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   RESEARCHER SETUP  —  edit the three lines below
+   ------------------------------------------------------------
+   1. ENDPOINT       Where entries are sent. Leave "" to test
+                     locally (entries still save on the phone and
+                     can be copied from "Back up / send").
+   2. ENDPOINT_STYLE "formspree"  or  "google-script"
+   3. STUDY_DAYS     Length of the diary (also = number of prompts)
+
+   !!! WHERE YOU HOST THIS MATTERS -------------------------------
+   A published claude.ai Artifact runs in a locked-down sandbox
+   that BLOCKS the page from sending data to outside services
+   (Formspree, Google, anything). Automatic sending will silently
+   fail there. For live data collection, put this single .html
+   file on an ordinary static host and give the participant THAT
+   link (make a QR code from it):
+     • Netlify Drop  — app.netlify.com/drop, drag the file in,
+       rename it index.html first. No signup to get a link.
+     • GitHub Pages / Cloudflare Pages / Vercel also work.
+   Then the Formspree code below works with no changes.
+   The Artifact link is fine for previewing the design only.
+
+   --- Option A: Formspree (fastest) ---------------------------
+     • formspree.io -> new form -> copy the endpoint
+       e.g. https://formspree.io/f/abcdwxyz
+     • set ENDPOINT to that, ENDPOINT_STYLE = "formspree"
+     • the FIRST submission triggers a confirmation email from
+       Formspree — click it once to activate the form
+     • each entry becomes one submission; open the form's
+       Submissions tab (also check its spam folder) or export CSV
+     • free plan: 50 submissions / month
+
+   --- Option B: Google Sheet via Apps Script -----------------
+     • New Google Sheet -> Extensions -> Apps Script
+     • paste the doPost() function from the comment at the
+       BOTTOM of this file, Save
+     • Deploy -> New deployment -> type "Web app"
+       Execute as: Me   |   Who has access: Anyone
+     • copy the /exec URL into ENDPOINT,
+       ENDPOINT_STYLE = "google-script"
+   ============================================================ */
+const ENDPOINT       = "https://formspree.io/f/maeypvjo";
+const ENDPOINT_STYLE  = "formspree";
+const STUDY_DAYS      = 14;
+
+const APP_VERSION = "1.0";
+
+/* Prompts. Reword freely; keep one per study day. */
+const PROMPTS = [
+  { id:"d1", text:"Text a friend to reschedule something you'd planned this week — say what came up and suggest a new time." },
+  { id:"d2", text:"Reply to this message as if it's from a parent or older relative: “How are you going? Haven't heard from you in a bit. Call when you can x”" },
+  { id:"d3", text:"Recommend something to someone — a show, a place to eat, a song — and say why they'd like it." },
+  { id:"d4", text:"You're running about 15 minutes late. Text the person who's waiting for you." },
+  { id:"d5", text:"Tell someone one small good thing that happened today." },
+  { id:"d6", text:"Message a group chat to sort out what everyone's doing on the weekend." },
+  { id:"d7", text:"Quick one-handed reply while you're walking: someone asks “still on for tonight?”" },
+  { id:"d8", text:"Share a funny memory from your day with someone you care about." },
+  { id:"d9", text:"Send a quick text to check in with someone who's been on your mind." },
+  { id:"d10", text:"Write a brief note to yourself about something you're looking forward to." },
+  { id:"d11", text:"Text a compliment to someone you know — it can be about their work, appearance, or personality." },
+  { id:"d12", text:"Ask a question that shows you're genuinely interested in someone's life or opinions." },
+  { id:"d13", text:"Share a cool quote from a movie or tv show you like." },
+  { id:"d14", text:"Express gratitude to someone who has made a positive impact on your day." },
+];
+
+/* ---------- multi-tap key definitions ---------- */
+const MULTITAP_MS = 850;
+const KEYSETS = {
+  "1":[".",",","'","?","!","-",":",";","(",")","\"","/","@","1"],
+  "2":["a","b","c","2"],
+  "3":["d","e","f","3"],
+  "4":["g","h","i","4"],
+  "5":["j","k","l","5"],
+  "6":["m","n","o","6"],
+  "7":["p","q","r","s","7"],
+  "8":["t","u","v","8"],
+  "9":["w","x","y","z","9"],
+  "0":[" ","0"],
+  "star":["*","+","=","<",">","|","~","^","_","&","%","#","$"],
+};
+const CASE_MODES = ["abc","Abc","ABC","123"];
+
+/* ---------- textese detection (stored, not shown to participant) ---------- */
+const TEXTESE = new Set(["u","ur","urs","r","y","n","k","kk","thx","tks","tnx","ty","pls","plz","pl","msg","txt","tmrw","tmr","2mrw","2moro","2day","2nite","2","4","4u","b4","gr8","l8","l8r","w8","cu","cya","brb","lol","lmao","rofl","omg","omw","idk","imo","imho","btw","rn","tbh","ngl","wyd","hbu","wbu","hru","atm","ppl","abt","bc","bcoz","cos","coz","def","obv","obvs","prob","probs","fyi","asap","nvm","jk","ikr","smh","af","bday","rlly","gonna","wanna","dunno","kinda","sorta","dis","dat","da","wit","gud","luv","thnx","pce","w/","w/o"]);
+const EMOTICON_RE = /(:-?\)|:-?\(|;-?\)|:-?d|:-?p|:-?\/|:-?\||:'\(|<3|xd|=\)|=\(|\^\^)/gi;
+
+/* ============================================================ */
+const LS = {
+  get(k,f){ try{ const v=localStorage.getItem(k); return v==null?f:JSON.parse(v); }catch(e){ return f; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
+};
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const NDAYS = Math.min(STUDY_DAYS, PROMPTS.length);
+
+let state = {
+  setup: LS.get("kd:setup", null),           // {participantId, firstUseDate}
+  entries: LS.get("kd:entries", []),         // full records + {id, synced}
+};
+let session = null;      // active compose session
+let activeScreen = "consent";
+let lastRecord = null;   // for the done screen / "do again"
+
+/* ---------- dates ---------- */
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function daysBetween(a,b){
+  const pa=a.split("-").map(Number), pb=b.split("-").map(Number);
+  return Math.round((Date.UTC(pb[0],pb[1]-1,pb[2]) - Date.UTC(pa[0],pa[1]-1,pa[2]))/86400000);
+}
+function dayNumber(){
+  if(!state.setup) return 1;
+  return Math.max(1, daysBetween(state.setup.firstUseDate, ymd(new Date())) + 1);
+}
+function openDateLabel(i0){
+  const p = state.setup.firstUseDate.split("-").map(Number);
+  const d = new Date(p[0], p[1]-1, p[2] + i0);
+  return d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+}
+
+/* ---------- screens ---------- */
+function show(name){
+  activeScreen = name;
+  $$(".screen").forEach(s => s.hidden = s.dataset.screen !== name);
+  window.scrollTo({top:0,behavior:"instant" in document.documentElement.style ? "instant" : "auto"});
+  if(name === "home") renderHome();
+  if(name === "backup") renderBackup();
+}
+
+let toastT;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+/* ---------- consent ---------- */
+$("#consentBox").addEventListener("change", e => $("#startBtn").disabled = !e.target.checked);
+$("#startBtn").addEventListener("click", () => {
+  if(!state.setup){
+    state.setup = { participantId: "P-" + Math.random().toString(36).slice(2,8).toUpperCase(), firstUseDate: ymd(new Date()) };
+    LS.set("kd:setup", state.setup);
+  }
+  show("home");
+});
+
+/* ---------- home ---------- */
+function entriesFor(id){ return state.entries.filter(e => e.promptId === id); }
+
+function renderHome(){
+  $("#idChip").textContent = "ID " + state.setup.participantId;
+  const dn = dayNumber();
+  const today = Math.min(dn, NDAYS);
+  $("#dayLine").textContent = dn <= NDAYS ? ("Day " + dn + " of " + NDAYS) : ("Week complete · day " + dn);
+
+  const dots = $("#dayDots"); dots.innerHTML = "";
+  for(let i=0;i<NDAYS;i++){
+    const el = document.createElement("i");
+    if(entriesFor(PROMPTS[i].id).length) el.className = "done";
+    else if(i+1 === today && dn <= NDAYS) el.className = "today";
+    dots.appendChild(el);
+  }
+
+  const list = $("#promptList"); list.innerHTML = "";
+  PROMPTS.forEach((p, i) => {
+    const done = entriesFor(p.id).length > 0;
+    const unlocked = (i+1) <= dn;
+    const row = document.createElement("button");
+    row.className = "prow";
+    row.disabled = !unlocked;
+    row.innerHTML =
+      '<span class="day">Day<br>'+(i+1)+'</span>' +
+      '<span class="txt">'+escapeHtml(p.text)+'</span>' +
+      '<span class="state '+(done?"done":unlocked?"do":"locked")+'">' +
+        (done ? "Done ✓" : unlocked ? "Write →" : openDateLabel(i)) +
+      '</span>';
+    if(unlocked) row.addEventListener("click", () => openCompose(p, i));
+    list.appendChild(row);
+  });
+
+  const wrap = $("#wrapBanner");
+  const allDone = PROMPTS.every(p => entriesFor(p.id).length);
+  if(allDone || dn > NDAYS){
+    wrap.hidden = false;
+    wrap.innerHTML = (allDone ? "That’s every prompt — thank you. " : "The week’s up — finish any you missed if you can. ") +
+      'Please <button class="linkbtn" id="wrapSend" style="padding:0">back up and send your entries</button>.';
+    $("#wrapSend").addEventListener("click", () => show("backup"));
+  } else {
+    wrap.hidden = true;
+  }
+}
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+$("#toBackup").addEventListener("click", () => show("backup"));
+
+/* ============================================================
+   COMPOSE  —  the feature-phone
+   ============================================================ */
+function newSession(prompt, index){
+  return {
+    promptId: prompt.id, promptText: prompt.text, day: index + 1,
+    attempt: entriesFor(prompt.id).length + 1,
+    committed: "", pendingKey: null, pendingIdx: 0, pendingTimer: null,
+    caseMode: "Abc",
+    keylog: [], presses: 0, backspaces: 0, caseChanges: 0,
+    openedPerf: performance.now(),
+    startedAt: null, startPerf: null, lastPressPerf: null,
+    longestPauseMs: 0, timeToFirstPressMs: null, resumed: false,
+  };
+}
+
+function openCompose(prompt, index){
+  const draft = LS.get("kd:draft", null);
+  if(draft && draft.promptId === prompt.id && draft.committed){
+    if(confirm("Resume your unfinished message for this prompt?")){
+      session = draft;
+      session.pendingKey = null; session.pendingIdx = 0; session.pendingTimer = null;
+      session.lastPressPerf = null;
+      session.startPerf = performance.now() - (draft.elapsedMs || 0);
+      session.resumed = true;
+    } else {
+      LS.set("kd:draft", null);
+      session = newSession(prompt, index);
+    }
+  } else {
+    session = newSession(prompt, index);
+  }
+  $("#composeDay").textContent = "Day " + session.day + (session.attempt > 1 ? "  ·  attempt " + session.attempt : "");
+  $("#composePrompt").textContent = prompt.text;
+  renderLCD();
+  show("compose");
+}
+
+$("#composeBack").addEventListener("click", () => { saveDraft(); show("home"); });
+
+/* ----- logging ----- */
+function ensureStarted(){
+  if(session.startedAt == null){
+    session.startedAt = Date.now();
+    session.startPerf = performance.now();
+    session.timeToFirstPressMs = Math.round(session.startPerf - session.openedPerf);
+  }
+}
+function log(a, extra){
+  const t = session.startPerf == null ? 0 : Math.round(performance.now() - session.startPerf);
+  session.keylog.push(Object.assign({ t, a }, extra || {}));
+}
+
+/* ----- multi-tap engine ----- */
+function resolveChar(key, idx){
+  const set = KEYSETS[key];
+  let ch = set[idx % set.length];
+  if(/[a-z]/.test(ch)) ch = applyCase(ch);
+  return ch;
+}
+function applyCase(ch){
+  const m = session.caseMode;
+  if(m === "ABC") return ch.toUpperCase();
+  if(m === "abc") return ch;
+  const t = session.committed;                  // "Abc" = sentence case
+  if(t.length === 0 || /[.!?]\s*$/.test(t)) return ch.toUpperCase();
+  return ch;
+}
+function restartTimer(){
+  clearTimeout(session.pendingTimer);
+  session.pendingTimer = setTimeout(() => { log("timeout-commit"); commitPending(); }, MULTITAP_MS);
+}
+function commitPending(){
+  if(session.pendingKey == null) return;
+  const ch = resolveChar(session.pendingKey, session.pendingIdx);
+  session.committed += ch;
+  log("commit", { key: session.pendingKey, ch });
+  session.pendingKey = null; session.pendingIdx = 0;
+  clearTimeout(session.pendingTimer);
+}
+function trackPace(){
+  const now = performance.now();
+  if(session.lastPressPerf != null){
+    const gap = now - session.lastPressPerf;
+    if(gap > session.longestPauseMs) session.longestPauseMs = gap;
+  }
+  session.lastPressPerf = now;
+}
+
+function pressKey(key){
+  ensureStarted();
+  session.presses++;
+  trackPace();
+  litKey(key);
+
+  if(session.caseMode === "123"){
+    commitPending();
+    const set = KEYSETS[key];
+    if(key === "hash"){ cycleCase(); return; }
+    const ch = key === "star" ? "*" : (set ? set[set.length-1] : (key === "hash" ? "#" : key));
+    session.committed += ch;
+    log("digit", { key, ch });
+    renderLCD(); saveDraftDebounced();
+    return;
+  }
+
+  if(key === "hash"){ commitPending(); cycleCase(); return; }
+  if(key === "0"){
+    commitPending();
+    session.committed += " ";
+    log("space", { ch: " " });
+    renderLCD(); saveDraftDebounced();
+    return;
+  }
+  // 1-9 and * : multi-tap
+  if(session.pendingKey === key){
+    session.pendingIdx++;
+    log("cycle", { key, idx: session.pendingIdx, ch: resolveChar(key, session.pendingIdx) });
+  } else {
+    commitPending();
+    session.pendingKey = key; session.pendingIdx = 0;
+    log("press", { key, ch: resolveChar(key, 0) });
+  }
+  restartTimer();
+  renderLCD(); saveDraftDebounced();
+}
+
+function backspace(){
+  ensureStarted();
+  trackPace();
+  litKey("clear");
+  if(session.pendingKey != null){
+    log("cancel-pending", { key: session.pendingKey });
+    session.pendingKey = null; session.pendingIdx = 0;
+    clearTimeout(session.pendingTimer);
+    renderLCD(); saveDraftDebounced();
+    return;
+  }
+  if(session.committed.length){
+    const removed = session.committed.slice(-1);
+    session.committed = session.committed.slice(0, -1);
+    session.backspaces++;
+    log("backspace", { removed });
+    renderLCD(); saveDraftDebounced();
+  }
+}
+function clearAll(){
+  if(!session.committed.length && session.pendingKey == null) return;
+  log("clear-all", { had: session.committed.length });
+  session.committed = "";
+  session.pendingKey = null; session.pendingIdx = 0;
+  clearTimeout(session.pendingTimer);
+  session.backspaces++;
+  renderLCD(); saveDraftDebounced();
+}
+function cycleCase(){
+  const i = CASE_MODES.indexOf(session.caseMode);
+  session.caseMode = CASE_MODES[(i + 1) % CASE_MODES.length];
+  session.caseChanges++;
+  log("case", { mode: session.caseMode });
+  renderLCD();
+}
+/* ----- render ----- */
+function renderLCD(){
+  const view = $("#lcdView");
+  const prov = session.pendingKey != null ? resolveChar(session.pendingKey, session.pendingIdx) : "";
+  if(!session.committed && !prov){
+    view.innerHTML = '<span class="placeholder">Start typing&hellip;</span>';
+  } else {
+    view.innerHTML = escapeHtml(session.committed) +
+      (prov ? '<span class="prov">' + escapeHtml(prov) + '</span>' : "") +
+      '<span class="caret"></span>';
+  }
+  view.scrollTop = view.scrollHeight;
+  $("#lcdCount").textContent = String(session.committed.length + (prov ? 1 : 0));
+  $("#lcdMode").textContent = session.caseMode;
+  $("#modeSoftLabel").textContent = session.caseMode;
+  $("#lcdHint").textContent = session.pendingKey != null
+    ? "Same key = next letter · pause or new key to keep “" + prov + "”"
+    : "Tap a key again for the next letter. 0 = space, 1 and ∗ cycle symbols.";
+}
+
+let litT = {};
+function litKey(k){
+  const sel = k === "clear" ? "#clearSoft" : k === "star" ? '[data-k="star"]' : k === "hash" ? '[data-k="hash"]' : '.key[data-k="'+k+'"]';
+  const el = document.querySelector(sel);
+  if(!el) return;
+  el.classList.add("lit");
+  clearTimeout(litT[k]);
+  litT[k] = setTimeout(() => el.classList.remove("lit"), 110);
+}
+
+/* ----- pad wiring ----- */
+$("#pad").addEventListener("click", e => {
+  const btn = e.target.closest(".key"); if(!btn) return;
+  const k = btn.dataset.k;
+  pressKey(k === "star" ? "star" : k === "hash" ? "hash" : k);
+});
+$("#modeSoft").addEventListener("click", () => { commitPending(); cycleCase(); });
+
+/* clear soft key: tap = backspace, hold = clear all */
+let holdT = null, held = false;
+function clearDown(){ held = false; holdT = setTimeout(() => { held = true; clearAll(); }, 550); }
+function clearUp(){ clearTimeout(holdT); if(!held) backspace(); }
+const clearBtn = $("#clearSoft");
+clearBtn.addEventListener("pointerdown", e => { e.preventDefault(); clearDown(); });
+clearBtn.addEventListener("pointerup", clearUp);
+clearBtn.addEventListener("pointerleave", () => clearTimeout(holdT));
+
+/* physical keys — digits/star/hash/backspace only, so letters must use the pad */
+window.addEventListener("keydown", e => {
+  if(activeScreen !== "compose") return;
+  if(e.target.tagName === "TEXTAREA") return;
+  if(/^[0-9]$/.test(e.key)){ e.preventDefault(); pressKey(e.key); }
+  else if(e.key === "*"){ e.preventDefault(); pressKey("star"); }
+  else if(e.key === "#"){ e.preventDefault(); commitPending(); cycleCase(); }
+  else if(e.key === "Backspace"){ e.preventDefault(); backspace(); }
+});
+
+$("#discardBtn").addEventListener("click", () => {
+  if(!session.committed && session.pendingKey == null){ show("home"); return; }
+  if(confirm("Discard this message?")){ LS.set("kd:draft", null); show("home"); }
+});
+
+/* ----- draft autosave ----- */
+let draftT;
+function saveDraftDebounced(){ clearTimeout(draftT); draftT = setTimeout(saveDraft, 500); }
+function saveDraft(){
+  if(!session || session.startedAt == null) return;
+  const d = Object.assign({}, session);
+  delete d.pendingTimer;
+  d.pendingKey = null; d.pendingIdx = 0;
+  d.elapsedMs = session.startPerf == null ? 0 : Math.round(performance.now() - session.startPerf);
+  d.savedAt = Date.now();
+  LS.set("kd:draft", d);
+}
+
+/* ============================================================
+   SEND  ->  metrics  ->  reflect
+   ============================================================ */
+function computeMetrics(msg, s, durationMs){
+  const words = msg.trim().split(/\s+/).filter(Boolean);
+  const tokens = words.map(w => w.toLowerCase().replace(/^[^\w'@/]+|[^\w'@/]+$/g,""));
+  const textese = [...new Set(tokens.filter(t => TEXTESE.has(t)))];
+  const emoticons = [...new Set((msg.match(EMOTICON_RE) || []).map(x => x.toLowerCase()))];
+  let emoji = [];
+  try { emoji = [...new Set([...msg.matchAll(/\p{Extended_Pictographic}/gu)].map(m => m[0]))]; } catch(e){}
+  let symbolChars = 0;
+  try { symbolChars = ([...msg].filter(c => /[^\p{L}\p{N}\s]/u.test(c))).length; } catch(e){}
+  const chars = [...msg].length;
+  return {
+    characters: chars,
+    words: words.length,
+    keyPresses: s.presses,
+    kspc: +(s.presses / Math.max(chars,1)).toFixed(2),
+    backspaces: s.backspaces,
+    durationMs,
+    timeToFirstPressMs: s.timeToFirstPressMs,
+    charsPerMin: durationMs ? +(chars / (durationMs/60000)).toFixed(1) : 0,
+    longestPauseMs: Math.round(s.longestPauseMs),
+    emoticons, emoji, texteseTokens: textese,
+    caseModeChanges: s.caseChanges,
+    symbolChars,
+    endedInMode: s.caseMode,
+    resumed: !!s.resumed,
+  };
+}
+function mmss(ms){ const t = Math.round(ms/1000); return Math.floor(t/60) + ":" + String(t%60).padStart(2,"0"); }
+
+let pendingRecord = null;
+
+$("#sendBtn").addEventListener("click", () => {
+  commitPending();
+  const msg = session.committed.replace(/\s+$/,"");
+  if(!msg.trim()){ toast("Type a message first"); return; }
+  const endedAt = Date.now();
+  const durationMs = endedAt - session.startedAt;
+  const metrics = computeMetrics(msg, session, durationMs);
+
+  pendingRecord = {
+    id: "e_" + endedAt + "_" + Math.random().toString(36).slice(2,7),
+    kind: "entry", schema: 1, appVersion: APP_VERSION,
+    participantId: state.setup.participantId,
+    promptId: session.promptId, promptText: session.promptText,
+    day: session.day, attempt: session.attempt,
+    message: msg,
+    startedAt: new Date(session.startedAt).toISOString(),
+    endedAt: new Date(endedAt).toISOString(),
+    durationMs,
+    metrics,
+    keylog: session.keylog,
+    reflection: null,
+    device: navigator.userAgent,
+    viewport: innerWidth + "x" + innerHeight,
+    screenSize: (screen.width || 0) + "x" + (screen.height || 0),
+    submittedAt: null,
+  };
+
+  $("#reflectMsg").textContent = msg;
+  $$("#effortRow button").forEach(b => b.setAttribute("aria-pressed","false"));
+  $("#reflectNotes").value = "";
+  chosenEffort = null;
+  show("reflect");
+});
+
+/* reflect */
+let chosenEffort = null;
+$("#effortRow").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  chosenEffort = +b.dataset.v;
+  $$("#effortRow button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+});
+$("#saveEntryBtn").addEventListener("click", async () => {
+  pendingRecord.reflection = { effort: chosenEffort, notes: $("#reflectNotes").value.trim() };
+  pendingRecord.submittedAt = new Date().toISOString();
+
+  const rec = Object.assign({ synced: false }, pendingRecord);
+  state.entries.push(rec);
+  LS.set("kd:entries", state.entries);
+  LS.set("kd:draft", null);
+  lastRecord = rec;
+
+  // done screen
+  $("#dTime").textContent = mmss(rec.durationMs);
+  $("#dPress").textContent = rec.metrics.keyPresses;
+  $("#dChars").textContent = rec.metrics.characters;
+  $("#doneSync").innerHTML = '<span class="pend">○ Sending…</span>';
+  show("done");
+
+  const ok = await sendRecord(rec);
+  rec.synced = ok;
+  LS.set("kd:entries", state.entries);
+  $("#doneSync").innerHTML = ok
+    ? '<span class="ok">✓ Sent to the researcher</span>'
+    : '<span class="pend">○ Saved on this phone — will send later</span>'
+      + '<br><span class="muted" style="font-weight:400;font-size:.75rem">' + escapeHtml(lastSendInfo.split("\n")[0]) + '</span>';
+});
+
+$("#doneHome").addEventListener("click", () => show("home"));
+$("#doneAgain").addEventListener("click", () => {
+  const idx = PROMPTS.findIndex(p => p.id === lastRecord.promptId);
+  openCompose(PROMPTS[idx], idx);
+});
+
+/* ============================================================
+   SENDING  —  endpoint + local retry queue
+   ============================================================ */
+function flatPayload(rec){
+  const m = rec.metrics, r = rec.reflection || {};
+  return {
+    participant_id: rec.participantId,
+    day: rec.day, prompt_id: rec.promptId, prompt: rec.promptText, attempt: rec.attempt,
+    message: rec.message,
+    started_at: rec.startedAt, ended_at: rec.endedAt,
+    duration_ms: rec.durationMs, duration_readable: mmss(rec.durationMs),
+    time_to_first_press_ms: m.timeToFirstPressMs,
+    key_presses: m.keyPresses, characters: m.characters, words: m.words,
+    kspc: m.kspc, chars_per_min: m.charsPerMin,
+    backspaces: m.backspaces, longest_pause_ms: m.longestPauseMs,
+    emoticons: m.emoticons.join(" "), emoji: m.emoji.join(" "),
+    textese_tokens: m.texteseTokens.join(", "),
+    case_mode_changes: m.caseModeChanges, symbol_chars: m.symbolChars,
+    ended_in_mode: m.endedInMode, resumed: m.resumed,
+    effort: r.effort == null ? "" : r.effort,
+    reflection_notes: r.notes || "",
+    device: rec.device, viewport: rec.viewport, screen_size: rec.screenSize,
+    app_version: rec.appVersion, entry_id: rec.id, submitted_at: rec.submittedAt,
+    keylog_json: JSON.stringify(rec.keylog),
+    full_json: JSON.stringify(rec),
+  };
+}
+let lastSendInfo = "";
+async function sendRecord(rec){
+  if(!ENDPOINT){ lastSendInfo = "No ENDPOINT set in the file — nothing is being sent."; return false; }
+  const payload = flatPayload(rec);
+  const isGS = ENDPOINT_STYLE === "google-script";
+  try {
+    const res = await fetch(ENDPOINT, {
+      method:"POST",
+      headers: isGS
+        ? { "Content-Type":"text/plain;charset=utf-8" }
+        : { "Content-Type":"application/json", "Accept":"application/json" },
+      body: JSON.stringify(payload),
+    });
+    let detail = "";
+    if(!res.ok){ try{ detail = " — " + (await res.text()).slice(0,200); }catch(e){} }
+    lastSendInfo = (res.ok ? "OK" : "FAILED") + " (HTTP " + res.status + ")" + detail;
+    return res.ok;
+  } catch(e){
+    const msg = (e && e.message) ? e.message : String(e);
+    lastSendInfo = "BLOCKED / offline — " + msg +
+      "\nIf you opened this as a claude.ai Artifact, its sandbox blocks sending to outside services like Formspree. Host the .html file on a normal web host (see notes) and use that link instead.";
+    return false;
+  }
+}
+async function flushQueue(){
+  const pending = state.entries.filter(e => !e.synced);
+  if(!pending.length || !ENDPOINT) return;
+  for(const rec of pending){
+    const ok = await sendRecord(rec);
+    if(ok){ rec.synced = true; }
+  }
+  LS.set("kd:entries", state.entries);
+}
+
+/* ============================================================
+   BACKUP screen
+   ============================================================ */
+function renderBackup(){
+  const total = state.entries.length;
+  const sent = state.entries.filter(e => e.synced).length;
+  $("#backupSync").innerHTML = total === 0
+    ? '<span class="muted">No entries yet.</span>'
+    : (sent === total
+        ? '<span class="ok">✓ All ' + total + ' entries sent</span>'
+        : '<span class="pend">○ ' + sent + ' of ' + total + ' sent — ' + (total - sent) + ' waiting</span>');
+  $("#backupArea").value = JSON.stringify({
+    participantId: state.setup ? state.setup.participantId : null,
+    exportedAt: new Date().toISOString(),
+    entries: state.entries.map(({synced, ...e}) => e),
+  }, null, 2);
+}
+$("#backupBack").addEventListener("click", () => show("home"));
+$("#retryBtn").addEventListener("click", async () => {
+  if(!ENDPOINT){ $("#diagLine").textContent = "No ENDPOINT set in the file."; return; }
+  toast("Trying…");
+  await flushQueue();
+  renderBackup();
+  $("#diagLine").textContent = "Last send: " + lastSendInfo;
+  toast("Done");
+});
+$("#testBtn").addEventListener("click", async () => {
+  $("#diagLine").textContent = "Testing " + (ENDPOINT || "(no endpoint)") + " …";
+  const probe = {
+    id: "test_" + Date.now(), participantId: (state.setup && state.setup.participantId) || "TEST",
+    promptId: "test", promptText: "connection test", day: 0, attempt: 0,
+    message: "CONNECTION TEST — please ignore", startedAt: new Date().toISOString(),
+    endedAt: new Date().toISOString(), durationMs: 0, appVersion: APP_VERSION,
+    device: navigator.userAgent, viewport: innerWidth + "x" + innerHeight,
+    screenSize: (screen.width||0) + "x" + (screen.height||0), submittedAt: new Date().toISOString(),
+    keylog: [], reflection: { effort: "", notes: "" },
+    metrics: { characters:0, words:0, keyPresses:0, kspc:0, backspaces:0, durationMs:0,
+      timeToFirstPressMs:0, charsPerMin:0, longestPauseMs:0, emoticons:[], emoji:[],
+      texteseTokens:[], caseModeChanges:0, symbolChars:0, endedInMode:"Abc", resumed:false },
+  };
+  const ok = await sendRecord(probe);
+  $("#diagLine").textContent =
+    (ok ? "✓ Sent a test row. Check your Formspree Submissions tab (and its spam folder)."
+        : "✗ Test did not go through.") + "\n\n" + lastSendInfo;
+});
+$("#copyBtn").addEventListener("click", async () => {
+  const text = $("#backupArea").value;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Copied — paste it into an email to the researcher");
+  } catch(e){
+    $("#backupArea").focus(); $("#backupArea").select();
+    toast("Select all and copy");
+  }
+});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+if(state.setup){
+  show("home");
+  flushQueue();
+} else {
+  show("consent");
+}
+</script>
+
+<!--
+================================================================
+GOOGLE APPS SCRIPT  —  paste into Extensions > Apps Script,
+then Deploy > New deployment > Web app
+(Execute as: Me   |   Who has access: Anyone), and put the
+/exec URL in ENDPOINT with ENDPOINT_STYLE = "google-script".
+================================================================
+function doPost(e){
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Entries') || ss.insertSheet('Entries');
+    var data = JSON.parse(e.postData.contents);
+    var keys = Object.keys(data);
+    if (sheet.getLastRow() === 0) sheet.appendRow(keys);
+    var header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var row = header.map(function(h){
+      var v = data[h];
+      return (v && typeof v === 'object') ? JSON.stringify(v) : v;
+    });
+    sheet.appendRow(row);
+    return ContentService.createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+================================================================
+-->
