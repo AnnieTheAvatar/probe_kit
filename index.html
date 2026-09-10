@@ -1,11 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Keypad Diary</title>
-<meta name="description" content="A one-week diary probe that imitates a feature-phone keypad and records how someone types.">
+<meta name="description" content="A two-week diary probe that imitates a feature-phone keypad and records how someone types.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Silkscreen&display=swap">
 <style>
+  html{-webkit-text-size-adjust:100%}
+  img{max-width:100%}
+  [hidden]{display:none!important}
   /* ============================================================
      PALETTE  — cool neutral wrapper + a single amber accent.
      The phone is a deliberately dark object in every theme.
      ============================================================ */
   :root{
+    color-scheme:light dark;
     --bg:#e7e9ec;
     --surface:#ffffff;
     --surface-2:#f1f2f5;
@@ -78,9 +90,9 @@
     -webkit-font-smoothing:antialiased;
     display:flex;
     justify-content:center;
-    padding:22px 16px 40px;
+    padding:14px 12px 30px;
   }
-  .wrap{width:100%;max-width:432px}
+  .wrap{width:100%;max-width:460px}
 
   h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-0.01em}
   h1{font-size:1.5rem;font-weight:700}
@@ -151,7 +163,6 @@
   .dots{display:flex;gap:6px;margin:14px 0 4px}
   .dots i{width:100%;height:6px;border-radius:3px;background:var(--line)}
   .dots i.done{background:var(--good)}
-  .dots i.today{background:var(--accent)}
 
   .prompt-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
   .prow{
@@ -163,8 +174,8 @@
   .prow:hover:not([disabled]){border-color:var(--accent)}
   .prow[disabled]{cursor:not-allowed;opacity:.55}
   .prow .day{
-    font-family:var(--pixel);font-size:.62rem;line-height:1.1;color:var(--muted);
-    width:34px;flex:none;text-transform:uppercase;
+    font-family:var(--mono);font-size:.85rem;font-weight:500;line-height:1;color:var(--muted);
+    width:20px;flex:none;text-align:center;
   }
   .prow .txt{flex:1;font-size:.9rem;line-height:1.4}
   .prow .state{font-size:.72rem;font-weight:600;white-space:nowrap;flex:none}
@@ -196,7 +207,7 @@
     border-radius:30px;padding:16px 16px 20px;
     box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 18px 40px -18px rgba(0,0,0,.55);
     border:1px solid #0c0d10;
-    max-width:340px;margin:0 auto;
+    max-width:360px;margin:0 auto;
     user-select:none;
   }
   .brand{
@@ -331,11 +342,35 @@
 
   footer.appfoot{margin-top:18px;text-align:center}
 
+  /* ---------- phone-first: fill the screen on a handset ---------- */
+  @media (max-width:520px){
+    body{padding:7px 7px 22px}
+    .wrap{max-width:none}
+    .card{padding:15px}
+    h1{font-size:1.32rem}
+    .eyebrow{margin-bottom:.35rem}
+    .backlink{margin-bottom:6px}
+    .promptcard{margin-bottom:10px;padding:10px 12px}
+    .phone{max-width:none;width:100%;padding:13px 11px 15px;border-radius:26px}
+    .lcd-view{height:30vh;min-height:140px;max-height:260px;font-size:1rem}
+    .lcd-hint{font-size:.66rem}
+    .pad{gap:7px}
+    .key{padding:12px 13px}
+    .key .kd{font-size:1.5rem}
+    .key .kl{font-size:.64rem}
+    .softrow{margin:11px 0 7px}
+    .callrow button{padding:13px 4px}
+    .prompt-list{gap:7px}
+    .prow{padding:12px 12px}
+  }
+
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
     .lcd-view .caret{animation:none}
   }
 </style>
+</head>
+<body>
 
 <div class="wrap">
 
@@ -345,7 +380,7 @@
       <div class="eyebrow">UTS · Human-Centred Design Research Methods</div>
       <h1>Keypad Diary</h1>
       <p class="muted small">A two-week diary study about how people adapt to old mobile-phone keypads &mdash; the kind where you press <b>7</b> four times to get an &ldquo;s&rdquo;.</p>
-      <p>Each day you&rsquo;ll get a short prompt and write a message through the on-screen keypad. Write the way that feels natural to you &mdash; there are no wrong answers, and shortcuts are welcome.</p>
+      <p>Over the two weeks you&rsquo;ll work through a set of short prompts, writing each message on the on-screen keypad. Do them in any order, whenever suits &mdash; roughly one a day works well. Write the way that feels natural to you; there are no wrong answers, and shortcuts are welcome.</p>
 
       <p class="small" style="margin-bottom:2px"><b>While you use it, the app records:</b></p>
       <ul class="tight small">
@@ -361,7 +396,7 @@
         <li>your name or contact details, unless you type them into a message yourself</li>
       </ul>
 
-      <p class="small muted">Your entries are sent to a private <span class="ph">&#10216;Google Sheet / form&#10217;</span> that only the researcher can access. Taking part is voluntary &mdash; skip any prompt, and stop whenever you like. To ask questions or withdraw your data, contact <span class="ph">&#10216;Annie Lacoba&#10217;</span>, <span class="ph">&#10216;annie.lacoba@student.uts.edu.au&#10217;</span>.</p>
+      <p class="small muted">Your entries are sent to a private <span class="ph">&#10216;Formspree&#10217;</span> that only the researcher can access. Taking part is voluntary &mdash; skip any prompt, and stop whenever you like. To ask questions or withdraw your data, contact <span class="ph">&#10216;Annie Lacoba&#10217;</span>, <span class="ph">&#10216;annie.lacoba@student.uts.edu.au&#10217;</span>.</p>
 
       <label class="consent-check">
         <input type="checkbox" id="consentBox">
@@ -378,9 +413,9 @@
         <h2>Your prompts</h2>
         <span class="chip" id="idChip">ID &mdash;</span>
       </div>
-      <div class="small muted" id="dayLine">Day 1</div>
+      <div class="small muted" id="dayLine">&nbsp;</div>
       <div class="dots" id="dayDots"></div>
-      <p class="small muted">Try to do one a day, but do them whenever suits. You can skip any prompt.</p>
+      <p class="small muted">Pick any prompt, in any order &mdash; roughly one a day. Skip any you&rsquo;d rather not do.</p>
       <div class="prompt-list" id="promptList"></div>
       <div class="banner" id="wrapBanner" hidden></div>
     </div>
@@ -393,7 +428,7 @@
   <section class="screen" data-screen="compose" hidden>
     <button class="backlink" id="composeBack">&larr; Prompts</button>
     <div class="promptcard">
-      <div class="day" id="composeDay">Day 1</div>
+      <div class="day" id="composeDay">Prompt 1</div>
       <div class="txt" id="composePrompt"></div>
     </div>
 
@@ -613,12 +648,6 @@ function dayNumber(){
   if(!state.setup) return 1;
   return Math.max(1, daysBetween(state.setup.firstUseDate, ymd(new Date())) + 1);
 }
-function openDateLabel(i0){
-  const p = state.setup.firstUseDate.split("-").map(Number);
-  const d = new Date(p[0], p[1]-1, p[2] + i0);
-  return d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
-}
-
 /* ---------- screens ---------- */
 function show(name){
   activeScreen = name;
@@ -650,39 +679,37 @@ function entriesFor(id){ return state.entries.filter(e => e.promptId === id); }
 function renderHome(){
   $("#idChip").textContent = "ID " + state.setup.participantId;
   const dn = dayNumber();
-  const today = Math.min(dn, NDAYS);
-  $("#dayLine").textContent = dn <= NDAYS ? ("Day " + dn + " of " + NDAYS) : ("Week complete · day " + dn);
+  const doneCount = PROMPTS.filter(p => entriesFor(p.id).length).length;
+  $("#dayLine").textContent = doneCount + " of " + NDAYS + " prompts done  ·  " +
+    (dn <= NDAYS ? "day " + dn + " of your fortnight" : "fortnight over");
 
   const dots = $("#dayDots"); dots.innerHTML = "";
   for(let i=0;i<NDAYS;i++){
     const el = document.createElement("i");
     if(entriesFor(PROMPTS[i].id).length) el.className = "done";
-    else if(i+1 === today && dn <= NDAYS) el.className = "today";
     dots.appendChild(el);
   }
 
   const list = $("#promptList"); list.innerHTML = "";
   PROMPTS.forEach((p, i) => {
     const done = entriesFor(p.id).length > 0;
-    const unlocked = (i+1) <= dn;
     const row = document.createElement("button");
     row.className = "prow";
-    row.disabled = !unlocked;
     row.innerHTML =
-      '<span class="day">Day<br>'+(i+1)+'</span>' +
+      '<span class="day">'+(i+1)+'</span>' +
       '<span class="txt">'+escapeHtml(p.text)+'</span>' +
-      '<span class="state '+(done?"done":unlocked?"do":"locked")+'">' +
-        (done ? "Done ✓" : unlocked ? "Write →" : openDateLabel(i)) +
-      '</span>';
-    if(unlocked) row.addEventListener("click", () => openCompose(p, i));
+      '<span class="state '+(done?"done":"do")+'">' + (done ? "Done ✓" : "Write →") + '</span>';
+    row.addEventListener("click", () => openCompose(p, i));
     list.appendChild(row);
   });
 
   const wrap = $("#wrapBanner");
-  const allDone = PROMPTS.every(p => entriesFor(p.id).length);
+  const allDone = doneCount === NDAYS;
   if(allDone || dn > NDAYS){
     wrap.hidden = false;
-    wrap.innerHTML = (allDone ? "That’s every prompt — thank you. " : "The week’s up — finish any you missed if you can. ") +
+    wrap.innerHTML = (allDone
+        ? "That’s every prompt — thank you. "
+        : "You’re near the end of the fortnight — finish any you’d still like to do. ") +
       'Please <button class="linkbtn" id="wrapSend" style="padding:0">back up and send your entries</button>.';
     $("#wrapSend").addEventListener("click", () => show("backup"));
   } else {
@@ -725,7 +752,7 @@ function openCompose(prompt, index){
   } else {
     session = newSession(prompt, index);
   }
-  $("#composeDay").textContent = "Day " + session.day + (session.attempt > 1 ? "  ·  attempt " + session.attempt : "");
+  $("#composeDay").textContent = "Prompt " + session.day + (session.attempt > 1 ? "  ·  attempt " + session.attempt : "");
   $("#composePrompt").textContent = prompt.text;
   renderLCD();
   show("compose");
@@ -977,7 +1004,7 @@ $("#sendBtn").addEventListener("click", () => {
     kind: "entry", schema: 1, appVersion: APP_VERSION,
     participantId: state.setup.participantId,
     promptId: session.promptId, promptText: session.promptText,
-    day: session.day, attempt: session.attempt,
+    promptNumber: session.day, studyDay: dayNumber(), attempt: session.attempt,
     message: msg,
     startedAt: new Date(session.startedAt).toISOString(),
     endedAt: new Date(endedAt).toISOString(),
@@ -1044,7 +1071,8 @@ function flatPayload(rec){
   const m = rec.metrics, r = rec.reflection || {};
   return {
     participant_id: rec.participantId,
-    day: rec.day, prompt_id: rec.promptId, prompt: rec.promptText, attempt: rec.attempt,
+    prompt_number: rec.promptNumber, study_day: rec.studyDay,
+    prompt_id: rec.promptId, prompt: rec.promptText, attempt: rec.attempt,
     message: rec.message,
     started_at: rec.startedAt, ended_at: rec.endedAt,
     duration_ms: rec.durationMs, duration_readable: mmss(rec.durationMs),
@@ -1128,7 +1156,7 @@ $("#testBtn").addEventListener("click", async () => {
   $("#diagLine").textContent = "Testing " + (ENDPOINT || "(no endpoint)") + " …";
   const probe = {
     id: "test_" + Date.now(), participantId: (state.setup && state.setup.participantId) || "TEST",
-    promptId: "test", promptText: "connection test", day: 0, attempt: 0,
+    promptId: "test", promptText: "connection test", promptNumber: 0, studyDay: 0, attempt: 0,
     message: "CONNECTION TEST — please ignore", startedAt: new Date().toISOString(),
     endedAt: new Date().toISOString(), durationMs: 0, appVersion: APP_VERSION,
     device: navigator.userAgent, viewport: innerWidth + "x" + innerHeight,
@@ -1195,3 +1223,5 @@ function doPost(e){
 }
 ================================================================
 -->
+</body>
+</html>
