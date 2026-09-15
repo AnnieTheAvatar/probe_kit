@@ -534,47 +534,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================
-   RESEARCHER SETUP  —  edit the three lines below
-   ------------------------------------------------------------
-   1. ENDPOINT       Where entries are sent. Leave "" to test
-                     locally (entries still save on the phone and
-                     can be copied from "Back up / send").
-   2. ENDPOINT_STYLE "formspree"  or  "google-script"
-   3. STUDY_DAYS     Length of the diary (also = number of prompts)
-
-   !!! WHERE YOU HOST THIS MATTERS -------------------------------
-   A published claude.ai Artifact runs in a locked-down sandbox
-   that BLOCKS the page from sending data to outside services
-   (Formspree, Google, anything). Automatic sending will silently
-   fail there. For live data collection, put this single .html
-   file on an ordinary static host and give the participant THAT
-   link (make a QR code from it):
-     • Netlify Drop  — app.netlify.com/drop, drag the file in,
-       rename it index.html first. No signup to get a link.
-     • GitHub Pages / Cloudflare Pages / Vercel also work.
-   Then the Formspree code below works with no changes.
-   The Artifact link is fine for previewing the design only.
-
-   --- Option A: Formspree (fastest) ---------------------------
-     • formspree.io -> new form -> copy the endpoint
-       e.g. https://formspree.io/f/abcdwxyz
-     • set ENDPOINT to that, ENDPOINT_STYLE = "formspree"
-     • the FIRST submission triggers a confirmation email from
-       Formspree — click it once to activate the form
-     • each entry becomes one submission; open the form's
-       Submissions tab (also check its spam folder) or export CSV
-     • free plan: 50 submissions / month
-
-   --- Option B: Google Sheet via Apps Script -----------------
-     • New Google Sheet -> Extensions -> Apps Script
-     • paste the doPost() function from the comment at the
-       BOTTOM of this file, Save
-     • Deploy -> New deployment -> type "Web app"
-       Execute as: Me   |   Who has access: Anyone
-     • copy the /exec URL into ENDPOINT,
-       ENDPOINT_STYLE = "google-script"
-   ============================================================ */
+  // variables
 const ENDPOINT       = "https://formspree.io/f/maeypvjo";
 const ENDPOINT_STYLE  = "formspree";
 const STUDY_DAYS      = 14;
@@ -588,11 +548,11 @@ const PROMPTS = [
   { id:"d3", text:"Recommend something to someone — a show, a place to eat, a song — and say why they'd like it." },
   { id:"d4", text:"You're running about 15 minutes late. Text the person who's waiting for you." },
   { id:"d5", text:"Tell someone one small good thing that happened today." },
-  { id:"d6", text:"Message a group chat to sort out what everyone's doing on the weekend." },
-  { id:"d7", text:"Quick one-handed reply while you're walking: someone asks “still on for tonight?”" },
+  { id:"d6", text:"Message a close friend to organise a time to catch up." },
+  { id:"d7", text:"Ask a friend what food they'd recommend for lunch." },
   { id:"d8", text:"Share a funny memory from your day with someone you care about." },
   { id:"d9", text:"Send a quick text to check in with someone who's been on your mind." },
-  { id:"d10", text:"Write a brief note to yourself about something you're looking forward to." },
+  { id:"d10", text:"Write a brief text to yourself about something you're looking forward to." },
   { id:"d11", text:"Text a compliment to someone you know — it can be about their work, appearance, or personality." },
   { id:"d12", text:"Ask a question that shows you're genuinely interested in someone's life or opinions." },
   { id:"d13", text:"Share a cool quote from a movie or tv show you like." },
@@ -1192,36 +1152,5 @@ if(state.setup){
   show("consent");
 }
 </script>
-
-<!--
-================================================================
-GOOGLE APPS SCRIPT  —  paste into Extensions > Apps Script,
-then Deploy > New deployment > Web app
-(Execute as: Me   |   Who has access: Anyone), and put the
-/exec URL in ENDPOINT with ENDPOINT_STYLE = "google-script".
-================================================================
-function doPost(e){
-  var lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName('Entries') || ss.insertSheet('Entries');
-    var data = JSON.parse(e.postData.contents);
-    var keys = Object.keys(data);
-    if (sheet.getLastRow() === 0) sheet.appendRow(keys);
-    var header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    var row = header.map(function(h){
-      var v = data[h];
-      return (v && typeof v === 'object') ? JSON.stringify(v) : v;
-    });
-    sheet.appendRow(row);
-    return ContentService.createTextOutput(JSON.stringify({ok:true}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } finally {
-    lock.releaseLock();
-  }
-}
-================================================================
--->
 </body>
 </html>
